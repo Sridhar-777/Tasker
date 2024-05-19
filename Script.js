@@ -23,147 +23,279 @@ document.getElementById("specialdrop").addEventListener("click", function () {
     
 })
 
+var opening = document.getElementById("popups");
+var everything = document.getElementById("all");
+var inputvalue = document.getElementById("taskname");
+var empty = document.getElementById("empty");
+var delpop = document.getElementById("delete");
+var changer = document.getElementById("colorChanger");
+var changer1 = document.getElementById("colorChanger1");
+var changer2 = document.getElementById("colorChanger2");
+var uniqueIdToDelete;
 
+changer.addEventListener("click", function () {
+    changer.style.backgroundColor = "white";
+    changer.classList.add("white");
+    changer1.classList.remove("white");
+    changer2.classList.remove("white");
 
+    var allItems = document.querySelectorAll("#empty li");
+    allItems.forEach(function (item) {
+        item.classList.remove("hidden");
+    });
+});
 
+changer1.addEventListener("click", function () {
+    changer.style.backgroundColor = "transparent";
+    changer1.classList.add("white");
+    changer.classList.remove("white");
+    changer2.classList.remove("white");
 
+    var checkedItems = document.querySelectorAll("#empty li input[type='checkbox']:checked");
+    var allItems = document.querySelectorAll("#empty li");
+    allItems.forEach(function (item) {
+        item.classList.add("hidden");
+    });
+    checkedItems.forEach(function (item) {
+        item.closest("li").classList.remove("hidden");
+    });
+});
 
+changer2.addEventListener("click", function () {
+    changer.style.backgroundColor = "transparent";
+    changer.classList.remove("white");
+    changer1.classList.remove("white");
+    changer2.classList.add("white");
 
+    var uncheckedItems = document.querySelectorAll("#empty li input[type='checkbox']:not(:checked)");
+    var allItems = document.querySelectorAll("#empty li");
+    allItems.forEach(function (item) {
+        item.classList.add("hidden");
+    });
+    uncheckedItems.forEach(function (item) {
+        item.closest("li").classList.remove("hidden");
+    });
+});
 
-var popup1 = document.getElementById("popups")
-
-function Popups() {
-    popup1.classList.add("popins")
-    
+function adding() {
+    opening.classList.add("popupsopen");
+    everything.classList.add("blurring");
 }
-function Cancel() {
-    popup1.classList.remove("popins")
 
+function cancel() {
+    opening.classList.remove("popupsopen");
+    everything.classList.remove("blurring");
+    inputvalue.value = "";
 }
 
+function addTask() {
+    var inputValue = document.getElementById("taskname").value;
+    var selection = document.getElementById("selection");
+    var selectvalue = selection.options[selection.selectedIndex].text;
 
+    if (inputValue == '') {
+        alert("Please enter a value");
+        return;
+    }
 
-// Now popup functions  and also  Creating Button for Add task Delete And Edit button
+    var uniqueId = "item_" + Math.random().toString(36).substr(2, 9);
 
+    var task = {
+        id: uniqueId,
+        name: inputValue,
+        category: selectvalue,
+        checked: false // Default checked status is false
+    };
 
+    // Get existing tasks from localStorage or initialize an empty array
+    var tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-var empty=document.getElementById("empty")
-function Click(){
-    var li=document.createElement ("li") 
-    li.id=uniqe
-    var para=document.createElement("p")
-    // var store=document.createElement("store")
+    // Add the new task to the array
+    tasks.push(task);
 
+    // Store the updated tasks array back into localStorage
+    localStorage.setItem("tasks", JSON.stringify(tasks));
 
+    // Call a function to display tasks from localStorage
+    displayTasks();
+
+    opening.classList.remove("popupsopen");
+    everything.classList.remove("blurring");
+    inputvalue.value = "";
+}
+
+function displayTasks() {
+    // Get tasks from localStorage
+    var tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+    // Clear the existing tasks on the UI
+    empty.innerHTML = '';
+
+    // Loop through each task and display it on the UI
+    tasks.forEach(function (task) {
+        renderTask(task);
+    });
+}
+
+function toggleStrike(itemId) {
+    var tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    var task = tasks.find(function (task) {
+        return task.id === itemId;
+    });
+
+    if (task) {
+        task.checked = !task.checked; // Toggle the checked status
+        localStorage.setItem("tasks", JSON.stringify(tasks)); // Update localStorage
+    }
+
+    var item = document.getElementById(itemId);
+    var pTags = item.querySelectorAll("h1");
+    pTags.forEach(function (p) {
+        p.classList.toggle("strike");
+    });
+}
+
+var condel = document.getElementById("confirmdelete");
+condel.addEventListener("click", function () {
+    if (uniqueIdToDelete) {
+        deleteItem(uniqueIdToDelete);
+        uniqueIdToDelete = null;
+    }
+    cancelDelete();
+});
+
+document.getElementById("specialdrop").addEventListener("click", function () {
+    document.getElementById("category-list").classList.toggle("show");
+});
+
+function cancelDelete() {
+    delpop.classList.remove("popupsopen");
+    everything.classList.remove("blurring");
+    inputvalue.value = "";
+}
+
+function deleteItem(itemId) {
+    var tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    tasks = tasks.filter(function (task) {
+        return task.id !== itemId;
+    });
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+
+    var item = document.getElementById(itemId);
+    item.parentNode.removeChild(item);
+}
+
+document.getElementById("alltask").addEventListener("click", function () {
+    displayTasks();
+});
+
+document.querySelectorAll("#category-list ul li").forEach(function (categoryItem) {
+    categoryItem.addEventListener("click", function () {
+        var categoryText = categoryItem.textContent;
+
+        // Retrieve tasks from localStorage
+        var tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+        // Filter tasks based on the selected category
+        var filteredTasks = tasks.filter(function(task) {
+            return task.category === categoryText;
+        });
+
+        // Clear the existing tasks on the UI
+        empty.innerHTML = '';
+
+        // Render the filtered tasks
+        filteredTasks.forEach(function(task) {
+            renderTask(task);
+        });
+    });
+});
+
+function renderTask(task) {
+    var li = document.createElement("li");
+    li.id = task.id;
 
     var radio = document.createElement("input");
-    radio.classList.add("box")
     radio.type = "checkbox";
     radio.name = "itemRadio";
     radio.classList.add("one");
+    radio.checked = task.checked; // Set the checkbox status
     radio.addEventListener("change", function () {
-        toggleStrike(uniqueId);
+        toggleStrike(task.id);
     });
 
+    var line = document.createElement("span");
+    line.classList.add("line");
 
-    
-   
+    var div = document.createElement("div");
+    div.classList.add("text")
+    div.id = "div"
 
+    var p1 = document.createElement("h1");
+    p1.textContent = task.name;
+    p1.classList.add("h1tag")
+    if (task.checked) {
+        p1.classList.add("strike"); // Add strike class if checked
+    }
 
-    // this is for new values
-    var uniqe="item"+Math.random().toString(36).substring(2,9)
+    var p2 = document.createElement("p");
+    p2.textContent = task.category;
 
+    var editButton = document.createElement("button");
+    editButton.id = "edit";
+    editButton.classList.add("btn1");
 
-
-
-   
-   
-     
-     
-
-
-
-   
-       
-    
-    
-
-
-
-
-
-
-    var news=document.createElement("button")
-    news.textContent="Edit"
-    news.classList.add("Edit")
-    
-   
-    var deletes=document.createElement("button")
-    deletes.textContent="delete"
-    deletes.classList.add("deletes")
-    
-    
-
-    
-
-    
-    // this is for local Storage...
-
-    var username=document.getElementById("username").value
-    localStorage.setItem("username",username)
-    para.textContent=username
-    li.appendChild(news)
-    li.appendChild(para)
-    li.appendChild(radio)
-    // store.appendChild(li)
-    li.appendChild(deletes)
-    empty.appendChild(li) 
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Adding colour to the button and Moving to the Next page.
-
-var blue =document.getElementById("blue")
-var green=document.getElementById("green")
-var grey=document.getElementById("grey")
-function colour1(){
-    blue.classList.toggle("colours1")
-    window.location.href="index3.html"
-}
-function colour2(){
-    green.classList.toggle("colours2")
-    window.location.href="index4.html"
-
-}
-function colour3(){
-    grey.classList.toggle("colours3")  
-    window.location.href="index5.html" 
-}
-
-function togglestrike(itemId) {
-    var item = document.getElementById(itemId);
-    var pTags = item.querySelectorAll("p");
-    pTags.forEach(function (p) {
-        p.classList.toggle("line");
+    var deleteButton = document.createElement("button");
+    deleteButton.id = "delete"
+    deleteButton.classList.add("btn2");
+    deleteButton.addEventListener("click", function () {
+        uniqueIdToDelete = task.id;
+        delpop.classList.add("popupsopen");
+        everything.classList.add("blurring");
     });
-    // radio.checked = !radio.checked;
+
+    div.appendChild(p1);
+    div.appendChild(p2);
+
+    li.appendChild(radio);
+    li.appendChild(line);
+    li.appendChild(div);
+    li.appendChild(editButton);
+    li.appendChild(deleteButton);
+
+    document.getElementById("empty").appendChild(li);
 }
+
+window.onload = function () {
+    displayTasks();
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
